@@ -2,7 +2,7 @@
 from qiskit import *
 import numpy as np
 
-# All of the qiskit gate types
+# All of the 'basic' qiskit gate types
 Id = qiskit.circuit.library.standard_gates.i.IGate
 H = qiskit.circuit.library.standard_gates.h.HGate
 X = qiskit.circuit.library.standard_gates.x.XGate
@@ -15,15 +15,26 @@ Cx = qiskit.circuit.library.standard_gates.x.CXGate
 Cz = qiskit.circuit.library.standard_gates.z.CZGate
 
 list_of_gates = [Id, H, X, Y, Z, Rx, Ry, Rz, Cx, Cz]  # storing the gate types in list
+gate_str_dict = {0: 'I', 1: 'H', 2: 'X', 3: 'Y', 4: 'Z', 5: 'Rx', 6: 'Ry', 7: 'Rz', 8: 'Cx', 9: 'Cz'}  # gate str label
 
 
 def read_circ(circ):
-    """ Takes a qiskit circuit and creates an array of tuples (gate_array) """
-    num_qbits = circ.num_qbits
-    
+    """ Takes a qiskit circuit and creates an array of tuples (gate_array),
+     returns the gate_array along with the num of qbits """
 
+    gate_array = []
+    num_qbits = circ.num_qubits
 
+    meta_data = circ.data
+    for element in meta_data:
+        gate_type = type(element[0])
+        gate_str = gate_str_dict[list_of_gates.index(gate_type)]
+        qbit_lst = [qbit.index for qbit in element[1]]
+        parameter_lst = element[0].params
 
+        gate_array.append((gate_str, qbit_lst, parameter_lst))
+
+    return gate_array, num_qbits
 
 
 def main():
@@ -39,16 +50,8 @@ def main():
     circ.cx(0, 2)
     circ.cz(0, 2)
 
-    circ.draw()
-    plt.show()
-
-    meta = circ.data
-    for i in meta:
+    for i in read_circ(circ)[0]:
         print(i)
-        print(i[0].params)
-
-    # z = qiskit.circuit.library.standard_gates.h.HGate
-    # print(z)
 
     return
 
