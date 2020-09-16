@@ -1,6 +1,9 @@
 # Main file for Quantum Compiler
 from qiskit import *
 import numpy as np
+import random
+
+# Constants ------------------------------------------------------------------------------------------------
 
 # All of the 'basic' qiskit gate types
 Id = qiskit.circuit.library.standard_gates.i.IGate
@@ -26,6 +29,8 @@ gate_func_dict = {'I': qiskit.QuantumCircuit.id,  # A dict relating the gate (st
                   'Rz': qiskit.QuantumCircuit.rz,
                   'Cx': qiskit.QuantumCircuit.cx,
                   'Cz': qiskit.QuantumCircuit.cz}
+
+# Functions ------------------------------------------------------------------------------------------------
 
 
 def read_circ(circ):
@@ -87,39 +92,64 @@ def general_replace(gate_lst, gate_name, replacement_gates):
     return
 
 
-# def specific_replace(gate_lst, rm_index_lst, replacement_gate, param_func=None):
-#     gate = gate_lst[gate_index]
-#     gate_str = gate[0]
-#     qbits = gate[1]
-#     params = gate[2][0]
-#
-#     if param_func is not None:
-#         params = param_func(params[0])
+def random_circ_generator(num_qbits=0, num_gates=0):
+    """ Generate a random qiskit circuit made up of the given 'simple'
+     gates. One can specify the num of qbits and num of gates in the circuit. """
+
+    if num_qbits == 0:
+        num_qbits = random.randint(1, 6)
+
+    if num_gates == 0:
+        num_gates = random.randint(1, 26)
+
+    gate_lst = []
+
+    for i in range(num_gates):
+        gate_index = random.randint(0, 10)
+        gate_str = gate_str_dict[gate_index]
+        control_index = random.randint(0, num_qbits + 1)
+
+        parameter = []
+        qbits = [control_index]
+
+        if gate_str in ['Cx', 'Cz']:
+            target_index = random.randint(0, num_qbits + 1)
+            while target_index == control_index:
+                target_index = random.randint(0, num_qbits + 1)
+
+            qbits.append(target_index)
+
+        elif gate_str in ['Rx', 'Ry', 'Rz']:
+            parameter.append(random.random() * (2 * np.pi))
+
+        gate_lst.append((gate_str, qbits, parameter))
+
+    circ = write_circ(gate_lst, num_qbits)
+    return circ
+
+
+def circ_equal(circ1, circ2):
+    """ Checks if two circuits generate the same statevector. """
+
+    backend = Aer.get_backend('statevector_simulator')
+    job1 = execute(circ1, backend)
+    job2 = execute(circ2, backend)
+    result1 = job1.result()
+    result2 = job2.result()
+
+    circ1_statevect = result1.get_statevector(circ1)
+    circ2_statevect = result2.get_statevector(circ2)
+
+    equal = np.isclose(circ1_statevect, circ2_statevect)
+
+    if not equal:
+        print(circ1_statevect)
+        print(circ2_statevect)
+
+    return equal
 
 
 def main():
-    circ = qiskit.QuantumCircuit(3)
-    circ.i(0)
-    circ.h(0)
-    circ.x(0)
-    circ.y(0)
-    circ.z(0)
-    circ.rx(np.pi/2, 0)
-    circ.ry(np.pi/2, 0)
-    circ.rz(np.pi/2, 0)
-    circ.cx(0, 2)
-    circ.cz(0, 2)
-    qiskit.QuantumCircuit.i(circ, 0)
-    circ.h([0, 1, 2])
-
-    for i in read_circ(circ)[0]:
-        print(i)
-
-    # mylst = [1, 2, 3, 4, 5]
-    # print(mylst)
-    # del mylst[1]
-    # print(mylst)
-
     return
 
 
