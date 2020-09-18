@@ -79,7 +79,7 @@ def write_circ(gate_lst, num_qbits):
 
         elif gate_str in ['Rx', 'Ry', 'Rz']:                      # apply Rx, Ry or Rz gates with parameter
             parameter = gate[2][0]
-            gate_func_dict[gate_str](circ, qbits, parameter)
+            gate_func_dict[gate_str](circ, parameter, qbits)
 
         else:                                                     # apply single qbit non parameterized gates
             gate_func_dict[gate_str](circ, qbits)
@@ -124,26 +124,34 @@ def random_circ_generator(num_qbits=0, num_gates=0):
     """
 
     if num_qbits == 0:
-        num_qbits = random.randint(1, 6)  # randomly pick # of qbits 1 - 5
+        num_qbits = random.randint(1, 5)  # randomly pick # of qbits 1 - 5
 
     if num_gates == 0:
-        num_gates = random.randint(5, 26)  # randomly pick # of gates 5 - 25
+        num_gates = random.randint(5, 25)  # randomly pick # of gates 5 - 25
 
     gate_lst = []
 
     for i in range(num_gates):                               # iterate over the number of gates
-        gate_index = random.randint(0, 10)                   # pick a gate at random
+
+        if num_qbits == 1:                                       # if there  is only 1 qbit then,
+            gate_index = random.randint(0, 7)                    # pick a single qbit gate at random
+        else:
+            gate_index = random.randint(0, 9)                    # pick any gate at random
+
         gate_str = gate_str_dict[gate_index]
-        control_index = random.randint(0, num_qbits + 1)     # pick a qbit to apply gate too
+        control_index = random.randint(0, num_qbits - 1)         # pick a qbit to apply gate too
 
         parameter = []
         qbits = [control_index]
 
         if gate_str in ['Cx', 'Cz']:                           # if the gate is a ControlX or ControlZ
-            target_index = random.randint(0, num_qbits + 1)    # pick target qbit
+            target_index = random.randint(0, num_qbits - 1)        # pick target qbit
 
-            while target_index == control_index:                # make sure its not the same as the control qbit
-                target_index = random.randint(0, num_qbits + 1)
+            if target_index == control_index:                 # make sure its not the same as the control qbit
+                if control_index == num_qbits - 1:
+                    target_index = control_index - 1
+                else:
+                    target_index = control_index + 1
 
             qbits.append(target_index)
 
