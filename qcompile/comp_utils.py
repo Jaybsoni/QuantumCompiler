@@ -16,9 +16,10 @@ Ry = qiskit.circuit.library.standard_gates.ry.RYGate
 Rz = qiskit.circuit.library.standard_gates.rz.RZGate
 Cx = qiskit.circuit.library.standard_gates.x.CXGate
 Cz = qiskit.circuit.library.standard_gates.z.CZGate
+# S = qiskit.circuit.library.standard_gates.s.SwapGate
 
 list_of_gates = [Id, H, X, Y, Z, Rx, Ry, Rz, Cx, Cz]  # storing the gate types in list
-gate_str_dict = {0: 'I', 1: 'H', 2: 'X', 3: 'Y', 4: 'Z', 5: 'Rx', 6: 'Ry', 7: 'Rz', 8: 'Cx', 9: 'Cz'}  # gate str label
+gate_str_dict = {0: 'I', 1: 'H', 2: 'X', 3: 'Y', 4: 'Z', 5: 'Rx', 6: 'Ry', 7: 'Rz', 8: 'Cx', 9: 'Cz'}  # , 10: 'S'}
 gate_func_dict = {'I': qiskit.QuantumCircuit.id,  # A dict relating the gate (str) to its qiskit func call
                   'H': qiskit.QuantumCircuit.h,   # I use this to create the final (compiled) qiskit circuit object
                   'X': qiskit.QuantumCircuit.x,
@@ -29,6 +30,7 @@ gate_func_dict = {'I': qiskit.QuantumCircuit.id,  # A dict relating the gate (st
                   'Rz': qiskit.QuantumCircuit.rz,
                   'Cx': qiskit.QuantumCircuit.cx,
                   'Cz': qiskit.QuantumCircuit.cz}
+                  # 'S': qiskit.QuantumCircuit.s}
 
 # Functions ------------------------------------------------------------------------------------------------
 
@@ -74,7 +76,7 @@ def write_circ(gate_lst, num_qbits):
         gate_str = gate[0]
         qbits = gate[1]
 
-        if gate_str in ['Cx', 'Cz']:                              # apply Cx or Cz gates
+        if gate_str in ['Cx', 'Cz', 'S']:                         # apply Cx, Cz, or S gates
             gate_func_dict[gate_str](circ, qbits[0], qbits[1])
 
         elif gate_str in ['Rx', 'Ry', 'Rz']:                      # apply Rx, Ry or Rz gates with parameter
@@ -94,9 +96,17 @@ def general_replace(gate_lst, gate_name, replacement_gates):
     replaces them with the set of gates stored in replacement_gates which is
     a list of gate tuples.
 
-    :param gate_lst:
-    :param gate_name:
-    :param replacement_gates:
+    A gate tuple will contain ('new_gate_str', [new_qbits] or func, [params] or func)
+    where 'new_gate_str' is the name of the new gate, [new_qbits] is a list of qbits
+    the new gate will act on. Note if this is empty, then it acts on the same qbits
+    as the old gate. if a func is provided, then it applies that func to the
+    old list of qbits to determine the new list of qbits. Finally, [params] is
+    a list of new parameters or a function which will be applied to the old parameters
+    in order to determine the new parameters
+
+    :param gate_lst: a list containing tuples eg. ('gate_str', [qbits], [params])
+    :param gate_name: a str, represents the quantum gate being applied
+    :param replacement_gates: a list of tuples, ('new_gate_str', [new_qbits] or func, [params] or func)
     :return: None
     """
 
@@ -104,9 +114,27 @@ def general_replace(gate_lst, gate_name, replacement_gates):
         gate_str = gate[0]
 
         if gate_str == gate_name:            # find and delete the gate tuple with name 'gate_name'
+            qbits = gate[1]
+            parms = gate[2]
             del gate_lst[index]
 
-            for i, new_gate in enumerate(replacement_gates):  # replace it with the set of gate tuples provided
+            for i, new_gate_tuple in enumerate(replacement_gates):  # replace it with the set of gates provided
+                replacement_gate_name = new_gate_tuple[0]
+                replacement_qbits = new_gate_tuple[1]
+                replacement_params = new_gate_tuple[2]
+
+                if type(replacement_qbits) != list:  # in some cases we may want the replacement_qbits to be a
+                    # function of the current params, in this case replacement_params is not a list, but a function
+                    replacement_qbits = [replacement_qbits(qbits)]
+
+                elif not replacement_qbits:        # if no replacement qbit indicies have been specified,
+                    replacement_qbits = qbits      # just apply the replacement gate on the same qbits as the old gate
+
+                if type(replacement_params) != list:  # in some cases we may want the replacement_params to be a
+                    # function of the current params, in this case replacement_params is not a list, but a function
+                    replacement_params = [replacement_params(parms)]
+
+                new_gate = (replacement_gate_name, replacement_qbits, replacement_params)
                 gate_lst.insert(index + i, new_gate)
 
     return
@@ -155,8 +183,11 @@ def random_circ_generator(num_qbits=0, num_gates=0):
 
             qbits.append(target_index)
 
-        elif gate_str in ['Rx', 'Ry', 'Rz']:                  # if the gate has a parameter
+        elif gate_str in ['Rx', 'Ry']:                        # if the gate has a theta parameter
             parameter.append(random.random() * (2 * np.pi))   # randomly select parameter
+
+        elif gate_str == 'Rz':                                # if the gate has a phi parameter
+            parameter.append(random.random() * np.pi)         # randomly select parameter
 
         gate_lst.append((gate_str, qbits, parameter))   # add the meta_data to the gate_lst
 
@@ -181,15 +212,27 @@ def circ_equal(circ1, circ2):
     result2 = job2.result()
 
     circ1_statevect = result1.get_statevector(circ1)
+    mag_circ1_statevect = np.sqrt(circ1_statevect * np.conj(circ1_statevect))
     circ2_statevect = result2.get_statevector(circ2)
+    mag_circ2_statevect = np.sqrt(circ2_statevect * np.conj(circ2_statevect))
 
-    equal = np.isclose(circ1_statevect, circ2_statevect)  # check if each entry is within a tolerance of each other
+    equal = np.isclose(mag_circ1_statevect, mag_circ2_statevect)  # check if entries are within tolerance of each other
 
-    if not equal:
-        print(circ1_statevect)
-        print(circ2_statevect)
+    if not equal.all():
+        print(np.round(circ1_statevect, decimals=3))
+        print(np.round(mag_circ1_statevect, decimals=3))
+        print(np.round(circ2_statevect, decimals=3))
+        print(np.round(mag_circ2_statevect, decimals=3))
 
     return equal
+
+
+def get_first(lst):
+    return lst[0]  # kinda self explanatory
+
+
+def get_second(lst):
+    return lst[1]  # equally self explanatory
 
 
 def main():
