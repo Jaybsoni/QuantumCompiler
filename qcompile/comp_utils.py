@@ -16,10 +16,10 @@ Ry = qiskit.circuit.library.standard_gates.ry.RYGate
 Rz = qiskit.circuit.library.standard_gates.rz.RZGate
 Cx = qiskit.circuit.library.standard_gates.x.CXGate
 Cz = qiskit.circuit.library.standard_gates.z.CZGate
-# S = qiskit.circuit.library.standard_gates.s.SwapGate
+S = qiskit.circuit.library.standard_gates.swap.SwapGate
 
-list_of_gates = [Id, H, X, Y, Z, Rx, Ry, Rz, Cx, Cz]  # storing the gate types in list
-gate_str_dict = {0: 'I', 1: 'H', 2: 'X', 3: 'Y', 4: 'Z', 5: 'Rx', 6: 'Ry', 7: 'Rz', 8: 'Cx', 9: 'Cz'}  # , 10: 'S'}
+list_of_gates = [Id, H, X, Y, Z, Rx, Ry, Rz, Cx, Cz, S]  # storing the gate types in list
+gate_str_dict = {0: 'I', 1: 'H', 2: 'X', 3: 'Y', 4: 'Z', 5: 'Rx', 6: 'Ry', 7: 'Rz', 8: 'Cx', 9: 'Cz', 10: 'S'}
 gate_func_dict = {'I': qiskit.QuantumCircuit.id,  # A dict relating the gate (str) to its qiskit func call
                   'H': qiskit.QuantumCircuit.h,   # I use this to create the final (compiled) qiskit circuit object
                   'X': qiskit.QuantumCircuit.x,
@@ -29,8 +29,8 @@ gate_func_dict = {'I': qiskit.QuantumCircuit.id,  # A dict relating the gate (st
                   'Ry': qiskit.QuantumCircuit.ry,
                   'Rz': qiskit.QuantumCircuit.rz,
                   'Cx': qiskit.QuantumCircuit.cx,
-                  'Cz': qiskit.QuantumCircuit.cz}
-                  # 'S': qiskit.QuantumCircuit.s}
+                  'Cz': qiskit.QuantumCircuit.cz,
+                  'S': qiskit.QuantumCircuit.swap}
 
 # Functions ------------------------------------------------------------------------------------------------
 
@@ -236,6 +236,9 @@ def get_second(lst):
 
 
 def main():
+    circ = qiskit.QuantumCircuit(3)
+    circ.swap(0, 1)
+    print(circ)
     return
 
 
