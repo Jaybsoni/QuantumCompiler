@@ -1,4 +1,4 @@
-# Main file for Quantum Compiler
+# Main file for Quantum Compiler Utility Functions
 from qiskit import *
 import numpy as np
 import random
@@ -236,9 +236,6 @@ def get_second(lst):
 
 
 def main():
-    circ = qiskit.QuantumCircuit(3)
-    circ.swap(0, 1)
-    print(circ)
     return
 
 
