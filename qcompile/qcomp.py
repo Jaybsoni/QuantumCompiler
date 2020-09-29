@@ -221,7 +221,7 @@ def circ_router(circ, topology):
             cntrl_qbit = curr_qbit_lst[0]
             trgt_qbit = curr_qbit_lst[1]
 
-            if not trgt_qbit in topology[cntrl_qbit]:  # check if the control and target qbits are 'connected'
+            if not (trgt_qbit in topology[cntrl_qbit]):  # check if the control and target qbits are 'connected'
                 new_target = topology[cntrl_qbit][1]  # if not, choose a qbit that is connected to the control
                 # to be the new target qbit
                 path = get_path(topology, new_target,
@@ -239,5 +239,3 @@ def circ_router(circ, topology):
     compiled_circ = utils.write_circ(gate_lst, num_qbits)  #
 
     return compiled_circ
-
-
