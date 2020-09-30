@@ -31,7 +31,7 @@ Finally, The write_circ function takes a gate_lst as wells as an int (num_qbits)
 
 ![write circ](/images/write_circ.PNG?raw=true)
 
-Now we have an easy way of reading our quantum circuits, augmenting the associated gate_lst and writing the turing this augmented gate_lst into a new quantum circuit! 
+Now we have an easy way of reading our quantum circuits, augmenting the associated gate_lst and turning this augmented gate_lst into a new quantum circuit! 
 
 ## qcomp 
 Begin by: `from qcompile import qcomp`
